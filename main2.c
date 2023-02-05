@@ -30,7 +30,20 @@ int aposition;
 int bposition;
 char **hidden;
 int counter=0;
-
+//------------------------
+//Arman things:
+int ar_pos=-5;
+int insAr=0,finAr=0,grepAr=0;
+char arman_string[100000];
+char insert_address[1000];
+int insert_line;
+int insert_character;
+char find_text[1000];
+int tree_arr=0;
+char temp[1000];
+char second_tree[1000];
+int arm_tree=0;
+int arm=-5;
 //void make_hidden_names(char *address, char *name)
 //{
 //        for(int j=0; j<1000; j++) name[j]='\0';
@@ -84,12 +97,25 @@ void add_char(char *a, int pos, char c)
 
 
 
-
 void fix_the_string(char *address)
 {
     int len=strlen(address);
-    if(address[len-1]==' ' || address[len-1]=='\n') remove_char(address,len-1);
-    if(address[0]=='"' || address[0]==' ') remove_char(address,0);
+    if(address[len-1]=='\n') remove_char(address,len-1);
+    if(address[0]=='"') remove_char(address,0);
+
+    int z=0;
+    if(address[0]==' ')
+        while(address[z]==' ')
+            remove_char(address,z);
+
+    len=strlen(address);
+    int m=strlen(address)-1;
+    if(address[len-1]==' ')
+        while(address[m]==' ')
+            {remove_char(address,m); m--;}
+
+
+
     int w=1;
     while(address[w]!='\0')
         {if(address[w]=='"' && address[w-1]!=92)
@@ -136,67 +162,318 @@ void fix_the_string(char *address)
 
 
 
+void remove_spaces (char *address)
+{
+    int len=strlen(address);
+    int z=0;
+    if(address[0]==' ')
+        while(address[z]==' ')
+            remove_char(address,z);
 
+    len=strlen(address);
+    int m=strlen(address)-1;
+    if(address[len-1]==' ')
+        while(address[m]==' ')
+            {remove_char(address,m); m--;}
 
+}
+
+//------------------------------------------------------------------------------------------
+//arman functions:
+int is_it_arman (char *text)
+{
+    int len=strlen(text);
+    int i=len-2;
+    arm=-5;
+    while(1)
+    {
+        if(text[i+1]=='D' && text[i]=='=')
+        {
+            arm=i;
+            break;
+        }
+        if(i<0) break;
+        i--;
+    }
+    insAr=0,finAr=0,grepAr=0;
+    return arm;
+}
+
+void break_down_arman(char *text, int arm , char *second)
+{
+    int len=strlen(text);
+    char order[1000]={'\0'};
+    for(int i=0; i<1000; i++) second[i]='\0';
+    for(int j=arm+3; j<len ; j++)
+        second[j-3-arm]=text[j];
+    //printf("this is the second part:%s*\ntwo whole:%s\n",second,text);
+    for(int k=len-1; k>=arm; k--)
+        remove_char(text,k);
+    remove_spaces(second);
+    //we have now separated orders into two parts and fixed them.
+
+    for(int y=0; second[y]!=' '; y++)
+        order[y]=second[y];
+
+    insAr=0,finAr=0,grepAr=0;
+
+    if(!strcmp(order,"insertstr"))
+        insAr=1;
+    else if (!strcmp(order,"find"))
+        finAr=1;
+    else if (!strcmp(order,"grep"))
+        grepAr=1;
+
+    //printf("this is the final second part:%s*\nthe fisrt part:%s\nins%d",second,text,insAr);
+}
+
+void do_arman(char *second)
+{
+    if(insAr==1)
+    {
+        for(int j=0; j<1000; j++) insert_address[j]='\0';
+        insert_character=0;
+        insert_line=0;
+        int i=18;
+        //printf("this is the second part:%s*\n",second);
+        while(1)
+        {
+             if(second[i]=='-' && second[i+1]=='-' && second[i+2]=='p' && second[i+3]=='o' && second[i+4]=='s' && second[i-1]!=92)
+             break;
+             insert_address[i-18]=second[i];
+             i++;
+        }
+        fix_the_string(second);
+        int leng=strlen(second);
+        insert_line=second[leng-3]-48;
+        insert_character=second[leng-1]-48;
+        fix_the_string(insert_address);
+        fix_the_string(arman_string);
+        insert(insert_address,arman_string,insert_line,insert_character);
+        //printf("we are going to insert - the address is:%s\nthe content(=name) is:%s\nline and character are:%d:%d\n",insert_address,arman_string,insert_line,insert_character);
+    }
+
+    if(finAr==1)
+    {
+        for(int i=0; i<1000; i++) find_text[i]='\0';
+        int i=4;
+        while(second[i]!='\0')
+        {
+            find_text[i-4]=second[i];
+            i++;
+        }
+        strcat(arman_string,find_text);
+        fix_the_string(arman_string);
+        char replace_message[1000]={'\0'};
+        giome_count=0;
+        if(arman_string[0]=='"') giome_count++;
+        find(arman_string,0,replace_message);
+        //printf("we are going to find:the whole text with out find --str is:%s\n",arman_string);
+    }
+
+    if(grepAr==1)
+    {
+        char c=0;
+        int l=0;
+        remove_spaces(second);
+        if(second[5]=='-' && second[6]=='c') c=1;
+        if(second[5]=='-' && second[6]=='l') l=1;
+        int dash_file=0;
+        while(1)
+        {
+            if(second[dash_file]=='-') break;
+            dash_file++;
+        }
+        char text[1000]={'\0'};
+        if(c==0 && l==0)
+            for(int i=dash_file-1; second[i]!='\0'; i++)
+                text[i+1-dash_file]=second[i];
+        else
+            for(int i=dash_file-1+3; second[i]!='\0'; i++)
+                text[i-2-dash_file]=second[i];
+
+        strcat(arman_string,text);
+        remove_spaces(arman_string);
+        giome_count=0;
+        //printf("this is the text:%s*\n",text);
+        if(text[0]=='"') giome_count++;
+        //printf("we are going to do grep:the text without -? --str is:%s*\nthe giome count is:%d\nloption and coption are:%d,%d\n",arman_string,giome_count,l,c);
+        grep(arman_string,giome_count,l,c);
+    }
+}
+//------------------------------------------------------------------------------------------
 
 void createfile()
 {
-    char *directory;
-    char *next_directory;
-    char *new_address;
-    int counter = 0;
-    int result;
-
-
-    scanf(" %[^ ]s", command_extension);
-    if(strcmp(command_extension, "--file") != 0) {
-        printf("Invalid Command!\nSimply type <--help> for more information.");
-        return;
-    }
-
-    scanf("%[^\n]s", address);
-    // strcpy(cpy_address, address);
-
-    directory = strtok(address, "/");
-    directory = strtok(NULL, "/");
-    directory = strtok(NULL, "/");
-
-    // printf("%s\n", directory);
-    while(directory != NULL)
+    chdir(family_roots);
+    char check[1000];
+    for(int jake=0; jake<1000; jake++) check[jake]=NULL;
+    scanf("%s",check);
+    getchar();
+    if(strcmp(check,"--file")!=0)
+        {puts("Don't forget to write --file before name and address.");}
+    else
     {
-        counter++;
-        next_directory = strtok(NULL, "/");
-        if(next_directory == NULL) {
-            if(!access(directory, F_OK)) {
-                printf("File already exist!\n");
-                return;
-            }
-            filepointer = fopen(directory, "a");
-            fclose(directory);
-            break;
+        char address[1000];
+        for(int ko=0; ko<1000; ko++)
+            {address[ko]==NULL;}
+
+        //taking address after --file
+        scanf("%[^\n]s",address);
+        if(address[0]=='/') remove_char(address,0);
+        char c;
+        if(address[0]=='"') remove_char(address,0);
+        int w=1;
+
+        fix_the_string(address);
+        //------------------------------------------------------
+        //extract the name out of this address:
+        char name[1000]={'\0'};
+        extract_name(address,name);
+        //-------------------------------------
+        chdir(family_roots);
+        //-------------------------------------
+        int len;
+        char final_address[1000]={'\0'};
+        char *temp;
+        temp=strtok(address,"/");
+        len=strlen(temp);
+        if(temp[0]=='/') remove_char(temp,0);
+        if(chdir(temp)!=0)
+            mkdir(temp);
+        strcat(final_address,temp);
+        strcat(final_address,"/");
+        while((temp=strtok(NULL,"/")!=NULL))
+        {
+            strcat(final_address,temp);
+            strcat(final_address,"/");
+            if(chdir(final_address)!=0)
+                mkdir(final_address);
         }
-        result = mkdir(directory);
-        chdir(directory);
-
-        // mkdir(directory);
-        strcpy(directory, next_directory);
+        chdir(final_address);
+        FILE *file;
+        strcat(final_address,name);
+        file=fopen(final_address,"w");
+        fclose(file);
     }
-    if(!result)
-    printf("File created successfully!\n");
-    // printf("count = %d\n", counter);
-
-    while(counter != 1)
-    {
-        chdir("..");
-        counter--;
-    }
-    return;
 }
+//------------------------------------------------------------------------------------------
+//void create_file()
+//{
+//    chdir(family_roots);
+//
+//    char check[1000]={'\0'};
+//    scanf("%s",check);
+//    if(strcmp(check,"--file")!=0)
+//        {puts("Don't forget to write --file before name and address."); return;}
+//    else
+//    {
+//        //getting input:
+//        char address[1000],name[1000],real_address[1000],tmp[1000];
+//        for(int ko=0; ko<1000; ko++)
+//            {address[ko]==NULL;name[ko]=NULL;real_address[ko]=NULL;tmp[ko]=NULL;}
+//
+//        //for example, if the address is root/my/hello.txt, real_address will be root/my/ and name will be hello.txt
+//        gets(address);
+//
+//        //cutting the address into name and path:
+//        int j=0,namezone=0;
+//        int length=strlen(address);
+//
+//        for(int i=length-1;address[i]!='/';i--)
+//            namezone++;
+//
+//        for(int i=length-(namezone);i<1000;i++)
+//        {
+//            name[j]=address[i];
+//            j++;
+//        }
+//
+//        //name has been extracted. getting the address of the file:
+//        for(int m=0; m<length-namezone; m++)
+//            real_address[m]=address[m];
+//
+//        //now, we should check if the address exists. If not, we should create it.
+//        //the real address should be broken into separate parts:
+//
+//        for(int i=0; i<1000; i++)
+//        {
+//            tmp[i]=real_address[i];
+//            if(real_address[i]=='/' && i!=1)
+//                {if(chdir(tmp)!=0) mkdir(tmp);printf("\n temp address:?%s-------did we move to it?%d\n",tmp,chdir(tmp));}
+//        }
+//
+//        printf("%sdid we move to the address?:%d\n",real_address,chdir(real_address));
+//        //now that the path is settled, we need to create the file:
+//        chdir(real_address);
+//        FILE *file;
+//        if((file=fopen(address,"r"))!=NULL) {puts("It already exists"); fclose(file); return;}
+//        file= fopen(address, "w");
+//        fclose(file);
+//
+//    }
+//
+//}
+//------------------------------------------------------------------------------------------
+//void createfile()
+//{
+//    char *directory;
+//    char *next_directory;
+//    char *new_address;
+//    int counter = 0;
+//    int result;
+//
+//
+//    scanf(" %[^ ]s", command_extension);
+//    if(strcmp(command_extension, "--file") != 0) {
+//        printf("Don't forget to add --file before name.");
+//        return;
+//    }
+//
+//    scanf("%[^\n]s", address);
+//    // strcpy(cpy_address, address);
+//
+//    directory = strtok(address, "/");
+//    directory = strtok(NULL, "/");
+//    directory = strtok(NULL, "/");
+//
+//    // printf("%s\n", directory);
+//    while(directory != NULL)
+//    {
+//        counter++;
+//        next_directory = strtok(NULL, "/");
+//        if(next_directory == NULL) {
+//            if(!access(directory, F_OK)) {
+//                printf("File already exist!\n");
+//                return;
+//            }
+//            filepointer = fopen(directory, "a");
+//            fclose(directory);
+//            break;
+//        }
+//        result = mkdir(directory);
+//        chdir(directory);
+//
+//        // mkdir(directory);
+//        strcpy(directory, next_directory);
+//    }
+//    if(!result)
+//    printf("File created successfully!\n");
+//    // printf("count = %d\n", counter);
+//
+//    while(counter != 1)
+//    {
+//        chdir("..");
+//        counter--;
+//    }
+//    return;
+//}
 
 //-----------------------------------------------------------------------------
 void cat()
 {
-     char check[1000]={'\0'};
+    chdir("D://vim project");
+    char check[1000]={'\0'};
     scanf("%s",check);
     if(strcmp(check,"--file")!=0)
         {puts("Don't forget to write --file before name and address."); return;}
@@ -206,40 +483,38 @@ void cat()
         char address[1000],name[1000],realaddress[1000];
         for(int ko=0; ko<1000; ko++)
             {address[ko]==NULL;name[ko]=NULL;realaddress[ko]=NULL;}
-        scanf("%s",address);
+        scanf("%[^\n]s",address);
+
+        //check for arman:
+        remove_spaces(address);
+        arm= is_it_arman(address);
+        char second[1000]={'\0'};
+        //printf("this is the arm:%d,\nthe text to be passed:%s***\n",arm,address);
+        if(arm>=0) break_down_arman(address,arm,second);
+        for(int i=0; i<100000; i++) arman_string[i]='\0';
+        //----------------------------------------------
+
+        fix_the_string(address);
         if(address[0]=='/') remove_char(address,0);
-        int length=strlen(address);
+        FILE *file;
+        file=fopen(address,"r");
+        if(file==NULL) {puts("Hmmm... I couldn't find a file with that address.");return;}
 
-        int j=0,namezone=0;
-        for(int i=length-1;address[i]!='/';i--)
-            namezone++;
-        for(int i=length-1-(namezone-1);i<1001;i++)
+        int jake=0;
+        char c = fgetc(file);
+        while (c != EOF)
         {
-            name[j]=address[i];
-            j++;}
-
-        for(int m=0; m<length-1-namezone; m++)
-            realaddress[m]=address[m];
-        realaddress[length-namezone-1]='/';
-
-    chdir(realaddress);
-    char str;
-    int *ptr = fopen(name , "r");
-    if(ptr != NULL) {
-        str = fgetc(ptr);
-        while(str != EOF) {
-            printf("%c", str);
-            str = getc(ptr);
-
+            if(arm<0) printf("%c",c);
+            if(arm>=0) {arman_string[jake]=c; jake++;}
+            c = fgetc(file);
         }
-        printf("\n");
-    }else {
-        printf("No Such File!\n");
-        return;
-    }
-    fclose(ptr);
+        //printf("this is arman:%s*\n",arman_string);
+        if(arm>=0) do_arman(second);
+
+        fclose(file);
     }
 }
+
 //-------------------------------------------------------------------------------------
 
 void insert_input()
@@ -299,7 +574,7 @@ void insert(char *address,char *name, int line, int character)
     strcpy(history_address,"D://vim project/backup/");
     strcat(history_address,nameOutOfFile);
     history=fopen(history_address,"w+");
-    printf("this should be the path of history:%s\n",history_address);
+    //printf("this should be the path of history:%s\n",history_address);
     if(history==NULL) puts("history could not be openend.");
 
     char c = fgetc(file);
@@ -396,7 +671,7 @@ void insert(char *address,char *name, int line, int character)
     fclose(file);
     //-------------------------------------------
      file = fopen(address,"r");
-     FILE* file_tmp = fopen("tmp.txt","w+");
+     FILE* file_tmp = fopen("D://vim project/backup/tmp.txt","w+");
      int n=1;
      char cameron2;
       while((cameron2=getc(file))!=EOF)
@@ -408,7 +683,7 @@ void insert(char *address,char *name, int line, int character)
         fclose(file);
         fclose(file_tmp);
         file = fopen(address,"w");
-        file_tmp = fopen("tmp.txt","r");
+        file_tmp = fopen("D://vim project/backup/tmp.txt","r");
         c = getc(file_tmp);
         while(c != EOF){
             putc(c,file);
@@ -1101,7 +1376,17 @@ void find_input()
     scanf(" %c",&text[0]);
     if(text[0]=='"') giome_count++;
     scanf("%[^\n]s", text+1);
+    //check for arman:
+    remove_spaces(text);
+    arm= is_it_arman(text);
+    char second[1000]={'\0'};
+    //printf("this is the arm:%d,\nthe text to be passed:%s***\n",arm,text);
+    if(arm>=0) break_down_arman(text,arm,second);
+    for(int i=0; i<100000; i++) arman_string[i]='\0';
+    //----------------------------------------------
     find(text,0,replace_message);
+    if(arm>=0) do_arman(second);
+
 }
 //------------------------------------------------------------------------
 
@@ -1128,7 +1413,7 @@ void find (char *text, int have_replace, char *replace_message)
        int j=0;
        remove_char(realmessage,0);
        //printf("that is the message to be find:%s\n",realmessage);
-       while(text[i+8]!=NULL)//به نظرم خوب ادرس رو نمی گیره
+       while(text[i+8]!=NULL)
        {
            address[j]=text[i+9];
            if(text[i+9]=='"' && text[i+8]!=92) {remove_char(address,j);remove_char(text,i+9);i--;j--;}
@@ -1185,7 +1470,6 @@ void find (char *text, int have_replace, char *replace_message)
     //-------------------------------------------------
     //main quotation marks  are removed.
     fix_the_string(address);
-    if(address[0]=='/') remove_char(address,0);
     fix_the_string(realmessage);
     fix_the_string(replace_message);
     //printf("this is the address of the file:%s\nthe message to be found in file:%s\nand the replacement message:%s\n",address,realmessage,replace_message);
@@ -1328,7 +1612,7 @@ void find (char *text, int have_replace, char *replace_message)
 
     //fix the address once and for all:
         if(count_positive!=0 || all_positive!=0 || at_positive!=0 || byword_positive!=0)
-            for(int r=strlen(address)-get_the_address-1; r<strlen(address); r++)
+            for(int r=strlen(address)-get_the_address; r<strlen(address); r++)
                 address[r]='\0';
         if(address[0]=='/') remove_char(address,0);
 
@@ -1424,8 +1708,11 @@ void find (char *text, int have_replace, char *replace_message)
                         }
                     }
 
-                    if(byword_positive==0 && have_replace==0) {printf("That thing you wanted... I found it! take a look at this character position: %d\n", position-1); return;}
-
+                    if(byword_positive==0 && have_replace==0)
+                    {
+                        if(arm<0) {printf("That thing you wanted... I found it! take a look at this character position: %d\n", position-1); return;}
+                        if(arm>=0) arman_string[0]=position-1;
+                    }
                     if(byword_positive==0 && have_replace==1)
                     {
                         int line=1;
@@ -1446,8 +1733,13 @@ void find (char *text, int have_replace, char *replace_message)
                             c=fgetc(file);
                             if(c==' ' || c=='\n') word_counter++;
                         }
-                        printf("That thing you wanted... I found it! take a look at this word position: %d\n", word_counter);
-                        return;
+                         if(arm<0)
+                         {
+                            printf("That thing you wanted... I found it! take a look at this word position: %d\n", word_counter);
+                            return;
+                         }
+
+                         if(arm>=0) arman_string[0]=word_counter;
                     }
                 }
             }
@@ -1495,8 +1787,11 @@ void find (char *text, int have_replace, char *replace_message)
             }
         }
         if(number_of_winners==0) printf("There is no such thing in here mate.");
-        if(number_of_winners!=0) printf("Guess how many times this wicked thing was found in the file: %d",number_of_winners);
-
+        if(number_of_winners!=0)
+        {
+            if(arm<0) printf("Guess how many times this wicked thing was found in the file: %d\n",number_of_winners);
+            if(arm>=0) arman_string[0]=number_of_winners;
+        }
     }
     //----------------------------------------------------------------------------------------
     //covers all and byword and simple wild cards.
@@ -1555,16 +1850,19 @@ void find (char *text, int have_replace, char *replace_message)
 
                 }
 
-            printf("%d ", word_counter);
-
+            if(arm<0) printf("%d ", word_counter);
+            if(arm>=0) arman_string[o]=word_counter;
             }
+            puts("\n");
         }
         if(byword_positive==0)
         {
             if(have_replace==0)
             {
                 for(int j=0; j<nom; j++)
-                printf("%d ", number_of_winners[j]);
+                {if(arm<0) printf("%d ", number_of_winners[j]);
+                if(arm>=0) arman_string[j]=number_of_winners[j];}
+                puts("\n");
             }
             if(have_replace==1)
             {
@@ -1581,8 +1879,6 @@ void find (char *text, int have_replace, char *replace_message)
         if(have_replace==1) {correct==1?puts("Replace done successfully"):puts("No match found");}
         //printf("\nthe replace messae was:%s", replace_message);
         fclose(file);
-
-
     }
     //----------------------------------------------------------------------------------------
     //covers byword and at.
@@ -1615,7 +1911,9 @@ void find (char *text, int have_replace, char *replace_message)
 
                     if(at_times==atnum)
                     {
-                        if(byword_positive==0 && have_replace==0) {printf("That thing you wanted... I found it! take a look at this character position: %d\n", position-1); return;}
+                        if(byword_positive==0 && have_replace==0)
+                            if (arm<0) {printf("That thing you wanted... I found it! take a look at this character position: %d\n", position-1); return;}
+                            else if(arm>=0) arman_string[0]=position-1;
                         if(byword_positive==0 && have_replace==1)
                         {
                             int line=1;
@@ -1635,8 +1933,10 @@ void find (char *text, int have_replace, char *replace_message)
                                 c=fgetc(file);
                                 if(c==' ' || c=='\n') word_counter++;
                             }
-                            printf("That thing you wanted... I found it! take a look at this word position: %d\n", word_counter);
-                            return;
+                            if(arm<0)
+                            {printf("That thing you wanted... I found it! take a look at this word position: %d\n", word_counter);
+                            return;}
+                            if(arm>=0) arman_string[0]=word_counter;
                         }
                     }
                 }
@@ -1685,11 +1985,11 @@ int my_own_damn_strstr (char *a, char *b)
 }
 
 //----------------------------------------------------------------------------------------
-void grep ()
+void grep_input()
 {
     chdir("D://vim project/root/");
-    int coption=0, loption=0, action=0;
     char check[1000];
+    int coption=0, loption=0, action=0;
     for(int jake=0; jake<1000; jake++) check[jake]=NULL;
     scanf("%s",check);
     getchar();
@@ -1700,17 +2000,39 @@ void grep ()
     if(strcmp(check,"--str")==0)
         action=1;
     if (action==0) for(int q=0; q<6; q++) getchar();
-    //-----------------------------------------------------------------
-     //get the whole thing all together as one text:
+
+    //get the whole thing all together as one text:
     for(int ko=0; ko<1000; ko++)
         text[ko]==NULL;
-    if(text[0]=='"') remove_char(text,0);
     //get the info all together as a text:
     scanf(" %c",&text[0]);
     if(text[0]=='"') giome_count++;
     scanf("%[^\n]s", text+1);
-    //printf("this is the whole thing:%s",text);
 
+    //check for arman:
+    remove_spaces(text);
+    arm= is_it_arman(text);
+    char second[1000]={'\0'};
+    //printf("this is the arm:%d,\nthe text to be passed:%s***\n",arm,address);
+    if(arm>=0) break_down_arman(text,arm,second);
+    for(int i=0; i<100000; i++) arman_string[i]='\0';
+    //----------------------------------------------
+    grep(text,giome_count,loption,coption);
+    if(arm>=0)do_arman(second);
+
+}
+
+struct files
+{
+    char name[1000];
+};
+
+
+void grep (char *text, int giome_count, int loption, int coption)
+{
+    chdir("D://vim project/root/");
+    //-----------------------------------------------------------------
+    //printf("this is the whole thing:%s",text);
     //now we break down the text into separate parts:
     char common_message[1000];
     for(int jake=0; jake<1000; jake++)
@@ -1724,57 +2046,41 @@ void grep ()
         common_message[i]=text[i];
         i++;
     }
-   // printf("this is the common message:%s",common_message);
-    //extracting names:
-    char names[1000][1000];
-    for(int o=0; o<1000; o++)
-        for(int y=0; y<1000; y++)
-            names[o][y]=NULL;
+    fix_the_string(common_message);
+    //printf("this is the common message:%s",common_message);
     int file_counter=0;
     i=i+9;
- //printf("size%d  ",i);
-    if(text[i]=='"')
-    {
-        while(1)
-        {
-            if(text[i]=='"' && text[i-1]!=92) {i+=2; file_counter++; break;}
-            names[file_counter][i];
-            i++;
-        }
-    }
-
-    int jake=0;
-    //printf("size%d  ",i);
+    struct files f[1000];
     while(1)
     {
-        if( i>=strlen(text) || text[i]==NULL ) break;
+        if(text[i]==NULL) {break;}
         if(text[i]=='"')
         {
-            jake=0;
+            i++;
+            int j=0;
             while(1)
             {
-                if((text[i]=='"' && text[i-1]!=92) || text[i]==NULL) {i+=2; file_counter++; break;}
-                names[file_counter][jake]=text[i];
-                //printf(" %c numer of i:%d\n", names[file_counter][jake], jake);
+                if(text[i]==NULL) break;
+                if(text[i]=='"') {file_counter++; i+=2; break;}
+                f[file_counter].name[j]=text[i];
                 i++;
+                j++;
             }
         }
+
         if(text[i]!='"')
         {
-            jake=0;
+            int j=0;
             while(1)
             {
-                if(text[i]==' ' || text[i]==NULL) {i++; file_counter++; break;}
-                names[file_counter][jake]=text[i];
-                //printf(" %c %d %d\n", names[file_counter][jake], file_counter, jake);
+                if(text[i]==' ' || text[i]==NULL) {file_counter++; i++; break;}
+                f[file_counter].name[j]=text[i];
                 i++;
-                jake++;
+                j++;
             }
-            jake=0;
         }
     }
-    //printf("\nfile counter is:%d\n",file_counter);
-
+    for(int t=0; t<file_counter; t++) fix_the_string(f[t].name);
     char string[1000]; for(int d=0; d<1000; d++) string[d]=NULL;
     char string2[1000]; for(int d=0; d<1000; d++) string2[d]=NULL;
     int ansCounter=0;
@@ -1782,12 +2088,10 @@ void grep ()
     for(int i=0; i<file_counter; i++)
     {
         for(int l=0; l<1000; l++)
-            string[l]=names[i][l];
-        //printf("this string is:%s\nthis is the first name:%c\n",string,names[i][0]);
-
+            string[l]=f[i].name[l];
         FILE *files;
-        files = fopen(string, "r");
-         if(files==NULL) {puts("error opening files"); return;}
+        files = fopen(string, "r"); //printf("%s\n",string);
+        if(files==NULL) {puts("error opening files"); return;}
         //--------------------------------------
         //count the number of lines in the file:
         char c;
@@ -1806,9 +2110,13 @@ void grep ()
             if(my_own_damn_strstr(string2,common_message)==1) flag=1;
             if(string2[strlen(string2)-1]=='\n') {remove_char(string2,strlen(string2)-1);}
 
-            if(flag==1 && coption==0 && loption==0) {printf("%s: %s\n",string,string2);}
+            if(flag==1 && coption==0 && loption==0) {if(arm<0) printf("%s: %s\n",string,string2); if(arm>=0){strcat(arman_string,string); strcat(arman_string,": ");strcat(arman_string,string2);strcat(arman_string,"\n");}}
             if(flag==1 && coption==1 && loption==0) {ansCounter++;}
-            if(flag==1 && coption==0 && loption==1) {printf("%s\n",string); fclose(files); break;}
+            if(flag==1 && coption==0 && loption==1)
+                {
+                    if(arm<0) {printf("%s\n",string); fclose(files); break;}
+                    if(arm>=0){strcpy(arman_string,string);}
+                }
 
             fgets(string2, 1000, files);
         }
@@ -1816,7 +2124,11 @@ void grep ()
         for(int d=0; d<1000; d++) string2[d]=NULL;
         fclose(files);
     }
-    if(coption==1) printf("%d",ansCounter);
+    if(coption==1)
+    {
+        if(arm<0)printf("%d\n",ansCounter);
+        if(arm>0)arman_string[0]=ansCounter;
+    }
 }
 //--------------------------------------------------------------------
 
@@ -2071,20 +2383,40 @@ void compare()
 void tree_input()
 {
     chdir("D://vim project/root");
-    scanf("%d", &fixed_depth);
+    for(int o=0; o<1000; o++) temp[o]='\0';
+    fixed_depth=0;
+    scanf("%[^\n]s",temp);
+    remove_spaces(temp);
+    int i=0;
+    while(temp[i]>47 && temp[i]<58)
+    {
+        fixed_depth+=temp[i];
+        fixed_depth=fixed_depth*10;
+        i++;
+    }
+    //check for arman:
+    remove_spaces(temp);
+    arm_tree=is_it_arman(temp);
+    for(int o=0; o<1000; o++) second_tree[o]='\0';
+    //printf("this is the arm_tree:%d,the text to be passed:%s***\n",arm_tree,temp);
+    if(arm_tree>=0) break_down_arman(temp,arm_tree,second_tree);
+    for(int i=0; i<100000; i++) arman_string[i]='\0';
     tree(0);
+    //printf("%s",arman_string);
+    if(arm_tree>=0) do_arman(second_tree);
 }
 
-char tpath[1000]="D://vim project/root/";
+//char tpath[1000]="D://vim project/root/";
 
 void tree(int depth)
 {
-
+    //----------------------------------------------------------------------------------------------
     if(fixed_depth<-1)
     {puts("With all due respect, you're not making any sense, mate. Minimum depth is -1."); return;}
-
-    if(depth==fixed_depth)
-        return;
+    if(depth==fixed_depth-1)
+       {
+           if(arm_tree<0) return;
+       }
 
     struct dirent *dir;
     struct stat filestat;
@@ -2105,36 +2437,22 @@ void tree(int depth)
         }
 
         stat(dir->d_name,&filestat);
-        if(dir->d_name[0] != '.' && S_ISDIR(filestat.st_mode))
+        if(dir->d_name[0] != '.')
         {
-            printf("%s%s\n",branch,dir->d_name);
+            if(arm_tree<0) printf("%s%s\n",branch,dir->d_name);
+            if(arm_tree>=0)
+            {
+                //strcat(arman_string,branch);
+                strcat(arman_string,dir->d_name);
+                strcat(arman_string,"\n");
+            }
         }
-         else if(dir->d_name[0] != '.')
-        {
-           // printf("%s*\n",dir->d_name);
-           //strcat(tpath, dir->d_name);
-        //chdir("D://vim project/root");
-
-        strcat(tpath, dir->d_name); printf("this is how path look like:%s*****",tpath);
-        if(GetFileAttributesA(tpath)!=FILE_ATTRIBUTE_HIDDEN)
-        printf("%s%s\n",branch,dir->d_name);
-        for(int i=0; i<1000; i++) tpath[i]='\0';
-        strcpy(tpath,"D://vim project/root/");
-
-
-        }
-
-
-        //for(int g=0; g<1000; g++) root[g]='\0';
         //-----------------------------------------
         //we have printed the first layer. time to search deeper:
-
 
         if(S_ISDIR(filestat.st_mode) && dir->d_name[0] != '.' )
         {
             chdir(dir->d_name);
-            //strcat(tpath,dir->d_name);
-            //strcat(tpath, "/");
             tree(depth+1);
         }
     }
@@ -2215,8 +2533,105 @@ void undo()
 }
 
 //--------------------------------------------------------------------
-//اتو ایندنت زده شد ولی قسمت امتیازیش باگ داره. درستش کن در اتو ایندنت سیمپل
-//--------------------------------------------------------------------
+
+void auto_indent()
+{
+    chdir("D://vim project/root");
+    //char address[1000],buffer[1000]; for(int i=0; i<1000; i++) {address[i]='\0'; buffer[i]='\0';}
+    //should add a function to make sure the address is correct.
+    int pre=0;
+    int af=0;
+    scanf("%[^\n]s",address);
+    FILE *file;
+    FILE *temp;
+    file=fopen(address,"r+");
+    temp=fopen("D://vim project/backup/indent.txt", "w");
+    if(file==NULL) {puts("Your file could not be found. Try again later!"); return;}
+    int line=0;
+    char c;
+    while((c=fgetc(file))!=EOF)
+    if(c=='\n') line++;
+    fseek(file , 0 , SEEK_SET);
+
+
+    int indent=0;
+    char buffer[1024]={'\0'};
+    char buffer2[1024]={'\0'};
+    int counter=1;
+
+    while(counter<=line+1)
+    {
+        fgets(buffer , 1024 , file);
+        for(int i=0; i<strlen(buffer); i++)
+        {
+            if((buffer[i]=='{' || buffer[i]=='}') && i!=0)
+            {
+                //printf("%d for the place %d/",(buffer[temp-1]==' '),temp-1);
+                int bremoval=0;
+                int temp=i;
+                if(buffer[temp-1]==32)
+                while(buffer[temp-1]==32)
+                    {remove_char(buffer, temp-1); bremoval++; temp--;}
+
+                temp=i+1-bremoval;
+                if(buffer[temp]==32)
+                while(buffer[temp]==32)
+                    {remove_char(buffer, temp);}
+            }
+        }
+        //حالا باید اینتر ها رو رعایت کنیم
+
+        if(buffer[strlen(buffer)-1]=='\n') remove_char(buffer,strlen(buffer)-1);
+
+        for(int i=0; i< strlen(buffer) ; i++)
+        {
+
+            if(buffer[i]=='{')
+                {
+                    //printf("here2");
+                    indent++;
+                    add_char(buffer, i+1 , '\n');
+                    for(int l=0; l<indent*4; l++)
+                    add_char(buffer, i+2 , ' ');
+                    add_char(buffer , i , ' ');
+                    i+=indent*4+2;
+                }
+
+            //printf("in the first line, this is what we start with to check }: %d\n",i);
+            if(buffer[i]=='}')
+                {
+                    //printf("here");
+                    indent--;
+                    add_char(buffer, i+1 , '\n');
+                    add_char(buffer, i , '\n');
+                    for(int l=0; l<indent*4; l++)
+                    add_char(buffer, i+1 , ' ');
+                    for(int l=0; l<indent*4; l++)
+                    add_char(buffer, i+7 , ' ');
+                    i+=indent*4*2+2;
+                }
+
+            if(i==0 && buffer[i]!='{' && buffer[i]!='}')
+                {for(int y=0; y<indent*4; y++)
+                    add_char(buffer , 0 , ' ');
+                 i+=4*indent;}
+        }
+
+
+        strcat(buffer2,buffer);
+        //fputs(buffer,temp);
+
+        for(int i=0; i<1024; i++) buffer[i]='\0';
+        counter++;
+    }
+
+
+printf("%s",buffer2);
+
+
+
+
+}
 
 
 
@@ -2300,7 +2715,7 @@ int main ()
         if(!strcmp(statement,"grep"))
         {
             right_order=1;
-            grep();
+            grep_input();
         }
 
         if(!strcmp(statement,"compare"))
@@ -2313,14 +2728,15 @@ int main ()
         if(!strcmp(statement,"tree"))
         {
             right_order=1;
+            tree_arr=0;
             tree_input();
         }
 
-//        if(!strcmp(statement,"auto-indent"))
-//        {
-//            right_order=1;
-//            auto_indent();
-//        }
+        if(!strcmp(statement,"auto-indent"))
+        {
+            right_order=1;
+            auto_indent();
+        }
 
         if(!strcmp(statement,"exit"))
         {
